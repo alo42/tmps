@@ -483,7 +483,11 @@ passed InteractionTests.AdvisorReport_GoesThroughProxy_Bridge_AndSharedInstrumen
 6 passed, 0 failed
 ```
 
-**Behavior changed at runtime.** The demo is played through the same `TradeShell` a user types into, so every behavior change in it is driven by input. An excerpt of section 3 of [`docs/demo-output.txt`](docs/demo-output.txt) — the same sale under three methods, switched while the program runs, with the observers reporting each step:
+**Behavior changed at runtime.**
+
+The demo is played through the same `TradeShell` a user types into, so every behavior change in it is driven by input: the same sale under three methods switched while the program runs, then an observer unsubscribed and subscribed again.
+
+Sections 3 and 4 of [`docs/demo-output.txt`](docs/demo-output.txt):
 
 ```text
 === 3. Strategy: the same sale under FIFO, LIFO and HIFO ===
