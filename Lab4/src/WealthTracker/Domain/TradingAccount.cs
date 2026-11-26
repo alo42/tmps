@@ -72,16 +72,19 @@ public sealed class TradingAccount : ITradeSubject
         var lots = LotsOf(symbol);
         var held = lots.Sum(lot => lot.Quantity);
         if (quantity > held)
-            throw new InvalidOperationException(FormattableString.Invariant($"Cannot sell {quantity} {symbol.ToUpperInvariant()}: only {held} held."));
+            throw new InvalidOperationException(
+                FormattableString.Invariant($"Cannot sell {quantity} {symbol.ToUpperInvariant()}: only {held} held."));
 
         // The strategy decides which lots; the account carries the sale out.
         var picks = _lotSelection.Select(lots, quantity);
         if (picks.Sum(p => p.Quantity) != quantity || picks.Any(p => !lots.Contains(p.Lot)))
-            throw new InvalidOperationException(FormattableString.Invariant($"{_lotSelection.Name} did not pick {quantity} units from the held lots."));
+            throw new InvalidOperationException(
+                FormattableString.Invariant($"{_lotSelection.Name} did not pick {quantity} units from the held lots."));
 
         var removed = picks.Select(p => p.Lot).ToList();
         var added = picks.Where(p => p.Quantity < p.Lot.Quantity)   // the unsold rest of a split lot
-                         .Select(p => new Lot(p.Lot.Instrument, p.Lot.Quantity - p.Quantity, p.Lot.UnitCost, p.Lot.Purchased))
+                         .Select(p => new Lot(p.Lot.Instrument, p.Lot.Quantity - p.Quantity,
+                                              p.Lot.UnitCost, p.Lot.Purchased))
                          .ToList();
         Apply(remove: removed, add: added);
 

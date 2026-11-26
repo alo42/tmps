@@ -1,0 +1,86 @@
+
+=== 1. Setup: Builder + Flyweight + Proxy from Lab 3 ===
+Built 'Adrian' with 43 lots sharing 6 instrument objects; Adrian (Owner) trades through a PortfolioAccessProxy.
+> watch log
+  watching: log
+> watch gains
+  watching: log, gains
+> watch alerts
+  watching: log, gains, alerts
+> method
+  lot selection: FIFO   (known: fifo, hifo, lifo)
+
+=== 2. Command: trades are objects that can be undone and redone ===
+> buy ETH 1.5 3900 2024-03-11
+  [log]    BUY 1.5 ETH @ 3,900.00 on 2024-03-11
+> buy ETH 2 2300 2024-08-05
+  [log]    BUY 2 ETH @ 2,300.00 on 2024-08-05
+  [alert]  ETH is 35.23% of the portfolio, above the 35% limit
+> undo
+  [log]    UNDONE BUY 2 ETH @ 2,300.00 on 2024-08-05
+> redo
+  [log]    BUY 2 ETH @ 2,300.00 on 2024-08-05
+  [alert]  ETH is 35.23% of the portfolio, above the 35% limit
+> history
+  1. buy 1.5 ETH @ 3,900.00
+  2. buy 2 ETH @ 2,300.00
+
+=== 3. Strategy: the same sale under FIFO, LIFO and HIFO ===
+> sell ETH 2
+  [log]    SELL 2 ETH @ 2,980.75 on 2026-11-26 - FIFO: 2 from 2023-03-12 @ 1,850.00
+  [gains]  +2,261.50 realised, total +2,261.50
+> undo
+  [log]    UNDONE SELL 2 ETH @ 2,980.75 on 2026-11-26 - FIFO: 2 from 2023-03-12 @ 1,850.00
+  [gains]  -2,261.50 realised, total 0.00
+  [alert]  ETH is 35.23% of the portfolio, above the 35% limit
+> method lifo
+  lot selection: LIFO   (known: fifo, hifo, lifo)
+> sell ETH 2
+  [log]    SELL 2 ETH @ 2,980.75 on 2026-11-26 - LIFO: 2 from 2024-08-05 @ 2,300.00
+  [gains]  +1,361.50 realised, total +1,361.50
+> undo
+  [log]    UNDONE SELL 2 ETH @ 2,980.75 on 2026-11-26 - LIFO: 2 from 2024-08-05 @ 2,300.00
+  [gains]  -1,361.50 realised, total 0.00
+  [alert]  ETH is 35.23% of the portfolio, above the 35% limit
+> method hifo
+  lot selection: HIFO   (known: fifo, hifo, lifo)
+> sell ETH 2
+  [log]    SELL 2 ETH @ 2,980.75 on 2026-11-26 - HIFO: 1.5 from 2024-03-11 @ 3,900.00, 0.5 from 2024-08-05 @ 2,300.00
+  [gains]  -1,038.50 realised, total -1,038.50
+
+=== 4. Observer: subscribing and unsubscribing at runtime ===
+> unwatch log
+  watching: gains, alerts
+> sell AAPL 2
+  [gains]  +58.60 realised, total -979.90
+> watch log
+  watching: log, gains, alerts
+> buy VWCE 2
+  [log]    BUY 2 VWCE @ 118.40 on 2026-11-26
+> history
+  1. buy 1.5 ETH @ 3,900.00
+  2. buy 2 ETH @ 2,300.00
+  3. sell 2 ETH @ 2,980.75
+  4. sell 2 AAPL @ 214.50
+  5. buy 2 VWCE @ 118.40
+
+=== 5. All together: the advisor's sale goes Command -> Strategy -> Proxy and is refused ===
+> sell ETH 1
+  denied   Ion (Advisor) is not allowed to remove a lot of 4.2 ETH.
+> history
+  history is empty
+Observers told about the refused sale: 0
+
+Adrian's holdings after the session (Bridge: HoldingsReport + ConsoleTableRenderer):
+> holdings
+Holdings - Adrian
+=================
+Symbol    Name                               Quantity       Cost      Value    Gain
+--------  ---------------------------------  --------  ---------  ---------  ------
+BTC       Bitcoin                                0.35  15,500.00  21,437.50  38.31%
+ETH       Ethereum                                5.7  11,220.00  16,990.28  51.43%
+VWCE      Vanguard FTSE All-World UCITS ETF        74   7,832.80   8,761.60  11.86%
+EUR-CASH  Savings account                       7,500   7,500.00   7,500.00   0.00%
+MSFT      Microsoft Corp.                           5   1,550.00   2,160.50  39.39%
+AAPL      Apple Inc.                               10   1,570.40   2,145.00  36.59%
+Total value:      58,994.88
