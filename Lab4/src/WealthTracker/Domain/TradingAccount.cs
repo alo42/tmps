@@ -75,12 +75,28 @@ public sealed class TradingAccount
         return new TradeReceipt(trade, added, removed);
     }
 
+    /// <summary>Undoes a trade: removes the lots it added and puts back the lots it removed.</summary>
+    public void Reverse(TradeReceipt receipt)
+    {
+        ArgumentNullException.ThrowIfNull(receipt);
+        Apply(remove: receipt.Added, add: receipt.Removed);
+    }
+
+    /// <summary>Repeats a reversed trade with exactly the same lots.</summary>
+    public void Reapply(TradeReceipt receipt)
+    {
+        ArgumentNullException.ThrowIfNull(receipt);
+        Apply(remove: receipt.Removed, add: receipt.Added);
+    }
+
     private List<Lot> LotsOf(string symbol) =>
         _portfolio.Lots.Where(lot => string.Equals(lot.Instrument.Symbol, symbol, StringComparison.OrdinalIgnoreCase))
                        .ToList();
 
-    private void Apply(IEnumerable<Lot> remove, IEnumerable<Lot> add)
+    private void Apply(IReadOnlyList<Lot> remove, IReadOnlyList<Lot> add)
     {
+        if (remove.Any(lot => !_portfolio.Lots.Contains(lot)))
+            throw new InvalidOperationException("The portfolio no longer holds the lots this trade expects.");
         foreach (var lot in remove)
             _portfolio.RemoveLot(lot);
         foreach (var lot in add)
