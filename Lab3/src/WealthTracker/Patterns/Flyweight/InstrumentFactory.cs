@@ -10,11 +10,15 @@ namespace WealthTracker.Patterns.Flyweight;
 public sealed class InstrumentFactory
 {
     private readonly ConcurrentDictionary<string, IInstrument> _pool = new(StringComparer.OrdinalIgnoreCase);
-    private readonly InstrumentCatalog _catalog;
+
+    // Created once. Passing the method group `catalog.Create` straight to
+    // GetOrAdd would allocate a new delegate on every lookup - which cost more
+    // memory than the shared instruments saved.
+    private readonly Func<string, IInstrument> _create;
 
     public InstrumentFactory(InstrumentCatalog catalog)
     {
-        _catalog = catalog;
+        _create = catalog.Create;
     }
 
     /// <summary>Number of distinct instruments created so far.</summary>
@@ -24,6 +28,6 @@ public sealed class InstrumentFactory
     {
         // Lookup-or-create. GetOrAdd is thread-safe: even if two threads race on
         // a new symbol, both receive the single instance that ends up stored.
-        return _pool.GetOrAdd(symbol, _catalog.Create);
+        return _pool.GetOrAdd(symbol, _create);
     }
 }

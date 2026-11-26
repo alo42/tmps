@@ -1,4 +1,5 @@
 using System.Reflection;
+using WealthTracker.Client;
 using WealthTracker.Domain;
 using WealthTracker.Patterns.Flyweight;
 
@@ -70,6 +71,17 @@ public class FlyweightTests
         Parallel.For(0, 1_000, _ => seen.Add(factory.Get("ETH")));
 
         Assert.Single(seen.Distinct());
+    }
+
+    [Fact]
+    public void SharingInstruments_AllocatesLessThanOneInstrumentPerLot()
+    {
+        var result = FlyweightMeasurement.Run(20_000);
+
+        Assert.Equal(6, result.SharedInstruments);
+        Assert.True(result.SavedPercent > 30m,
+            $"expected > 30% saved, measured {result.SavedPercent:0.0}% " +
+            $"({result.SharedBytes} B shared vs {result.UnsharedBytes} B unshared)");
     }
 
     [Fact]
