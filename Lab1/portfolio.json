@@ -1,0 +1,38 @@
+[
+  {
+    "symbol": "AAPL",
+    "kind": "stock",
+    "quantity": "12",
+    "value": "2574.00"
+  },
+  {
+    "symbol": "MSFT",
+    "kind": "stock",
+    "quantity": "5",
+    "value": "2160.50"
+  },
+  {
+    "symbol": "BTC",
+    "kind": "crypto",
+    "quantity": "0.35",
+    "value": "21437.50"
+  },
+  {
+    "symbol": "ETH",
+    "kind": "crypto",
+    "quantity": "4.2",
+    "value": "12519.15"
+  },
+  {
+    "symbol": "EUR-SAVINGS",
+    "kind": "cash",
+    "quantity": "7500",
+    "value": "7500.00"
+  },
+  {
+    "symbol": "FLAT-CHISINAU",
+    "kind": "real_estate",
+    "quantity": "1",
+    "value": "44000.00"
+  }
+]

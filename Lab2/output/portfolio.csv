@@ -1,0 +1,7 @@
+group,symbol,kind,quantity,value,net_value
+Investments/Stocks,AAPL,stock,12,2574.00,2561.13
+Investments/Stocks,MSFT,stock,5,2160.50,2149.70
+Investments/Crypto,BTC,crypto,0.35,21437.50,21208.13
+Investments/Crypto,ETH,crypto,4.2,12519.15,12378.96
+Savings,EUR-SAVINGS,cash,7500,7500.00,7500.00
+Property,FLAT-CHISINAU,real_estate,1,44000.00,39950.00
