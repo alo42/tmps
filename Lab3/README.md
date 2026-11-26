@@ -56,8 +56,15 @@ Lab3/
 │   │   └── Bridge/             Report + 3 reports, IReportRenderer + 3 renderers
 │   └── Creational/             PortfolioBuilder, PortfolioDirector, RendererFactory
 ├── tests/WealthTracker.Tests/  31 xUnit v3 tests, one class per pattern
-└── docs/                       captured test log and demo output
+├── docs/                       captured test log and demo output
+│   └── report-builder/         renders REPORT.md into the PDF (see below)
+├── REPORT.md                   the report
+└── Lab3_AdrianMutu_FAF-242.pdf the same report with the UTM cover page
 ```
+
+The application and its tests are C# only. `docs/report-builder/` is
+documentation tooling (Python + ReportLab) that turns `REPORT.md` into the PDF:
+`python3 docs/report-builder/build_pdf.py`.
 
 ## Extending it — new classes only
 
