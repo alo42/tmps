@@ -1,0 +1,54 @@
+$ dotnet run --project src/WealthTracker -- markdown
+
+=== 1. Builder + Flyweight factory: building the portfolio ===
+Built 'Adrian' with 43 purchase lots.
+
+=== 2. Flyweight: lots share instrument data ===
+Lots: 43    distinct instrument objects: 6
+VWCE lots: 36, all pointing at the same object: True
+Allocating 100,000 lots: shared 7,200,648 B vs unshared 12,800,024 B -> 5,599,376 B saved (43.7%)
+
+=== 3. Proxy: sharing the portfolio with an advisor ===
+  ALLOWED  Adrian (Owner) buys 1 MSFT
+  ALLOWED  Ion (Advisor) reads the lots
+  DENIED   Ion (Advisor) sells 1 MSFT - Ion (Advisor) is not allowed to sell 1 MSFT.
+  DENIED   Visitor (Guest) reads the lots - Visitor (Guest) is not allowed to view the lots.
+
+=== 4. Bridge: reports x formats ===
+AllocationReport + ConsoleTableRenderer:
+Allocation - Adrian
+===================
+Asset class      Value   Share
+-----------  ---------  ------
+Crypto       33,956.65  62.06%
+Etf           8,524.80  15.58%
+Cash          7,500.00  13.71%
+Stock         4,734.50   8.65%
+
+PerformanceReport + CsvRenderer:
+Invested,"41,856.80"
+Market value,"54,715.95"
+Unrealised gain,"12,859.15"
+Return,30.72%
+Best performer,ETH (61.12%)
+
+
+=== 5. All together: the advisor's holdings report (markdown) ===
+## Holdings - Adrian
+
+| Symbol | Name | Quantity | Cost | Value | Gain |
+| --- | --- | ---: | ---: | ---: | ---: |
+| BTC | Bitcoin | 0.35 | 15,500.00 | 21,437.50 | 38.31% |
+| ETH | Ethereum | 4.2 | 7,770.00 | 12,519.15 | 61.12% |
+| VWCE | Vanguard FTSE All-World UCITS ETF | 72 | 7,596.00 | 8,524.80 | 12.23% |
+| EUR-CASH | Savings account | 7,500 | 7,500.00 | 7,500.00 | 0.00% |
+| AAPL | Apple Inc. | 12 | 1,940.80 | 2,574.00 | 32.63% |
+| MSFT | Microsoft Corp. | 5 | 1,550.00 | 2,160.50 | 39.39% |
+
+**Total value:** 54,715.95  
+
+Advisor access log:
+  ALLOWED  Ion: view the lots
+  DENIED   Ion: sell 1 MSFT
+  ALLOWED  Ion: view the portfolio
+  ALLOWED  Ion: view the lots

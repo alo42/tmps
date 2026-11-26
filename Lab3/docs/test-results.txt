@@ -1,0 +1,40 @@
+$ dotnet test --output Detailed
+passed WealthTracker.Tests.CreationalTests.Builder_TakesInstrumentsFromTheFlyweightFactory (8ms)
+passed WealthTracker.Tests.ProxyTests.Advisor_Lots_ReturnsExactlyWhatTheRealPortfolioReturns (8ms)
+passed WealthTracker.Tests.FlyweightTests.MarketValue_TakesQuantityAsExtrinsicState (9ms)
+passed WealthTracker.Tests.BridgeTests.HoldingsReport_AggregatesLotsPerInstrument (12ms)
+passed WealthTracker.Tests.CreationalTests.RendererFactory_NewFormat_IsRegisteredWithoutEditingTheFactory (3ms)
+passed WealthTracker.Tests.ProxyTests.Owner_AddLot_PassesTheSameLotThroughUnchanged (4ms)
+passed WealthTracker.Tests.CreationalTests.Builder_RejectsAnEmptyPortfolio (0ms)
+passed WealthTracker.Tests.CreationalTests.RendererFactory_CreatesTheRendererForEachFormat (0ms)
+passed WealthTracker.Tests.FlyweightTests.SharingInstruments_AllocatesLessThanOneInstrumentPerLot (5ms)
+passed WealthTracker.Tests.ProxyTests.EveryAttempt_IsRecordedInTheAccessLog (1ms)
+passed WealthTracker.Tests.ProxyTests.Advisor_AddLot_IsBlocked_AndNeverReachesTheRealPortfolio (0ms)
+passed WealthTracker.Tests.ProxyTests.Guest_CannotEvenView (0ms)
+passed WealthTracker.Tests.ProxyTests.NewRole_WorksWithoutChangingTheProxy (0ms)
+passed WealthTracker.Tests.BridgeTests.PerformanceReport_ComputesTheReturnOnCost (8ms)
+passed WealthTracker.Tests.FlyweightTests.TenThousandLots_ShareOneInstrumentPerSymbol (3ms)
+passed WealthTracker.Tests.FlyweightTests.Get_SameSymbolTwice_ReturnsTheSameInstance (0ms)
+passed WealthTracker.Tests.FlyweightTests.Get_UnknownSymbol_Throws (0ms)
+passed WealthTracker.Tests.FlyweightTests.Instrument_IntrinsicStateIsImmutable (0ms)
+passed WealthTracker.Tests.FlyweightTests.Get_FromManyThreadsAtOnce_StillCreatesOneInstance (1ms)
+passed WealthTracker.Tests.BridgeTests.HoldingsReport_ShowsTheSameTotal_InEveryFormat(renderer: ConsoleTableRenderer { }) (1ms)
+passed WealthTracker.Tests.BridgeTests.HoldingsReport_ShowsTheSameTotal_InEveryFormat(renderer: MarkdownRenderer { }) (0ms)
+passed WealthTracker.Tests.BridgeTests.HoldingsReport_ShowsTheSameTotal_InEveryFormat(renderer: CsvRenderer { }) (0ms)
+passed WealthTracker.Tests.BridgeTests.NewReport_WorksWithEveryRenderer_WithoutChangingThem(renderer: ConsoleTableRenderer { }) (0ms)
+passed WealthTracker.Tests.BridgeTests.NewReport_WorksWithEveryRenderer_WithoutChangingThem(renderer: MarkdownRenderer { }) (0ms)
+passed WealthTracker.Tests.InteractionTests.ConsoleDemo_RunsEverySection (28ms)
+passed WealthTracker.Tests.InteractionTests.Advisor_CannotTrade_OnTheSamePath (0ms)
+passed WealthTracker.Tests.InteractionTests.AdvisorReport_GoesThroughProxy_Bridge_AndSharedInstruments (0ms)
+passed WealthTracker.Tests.BridgeTests.NewReport_WorksWithEveryRenderer_WithoutChangingThem(renderer: CsvRenderer { }) (2ms)
+passed WealthTracker.Tests.BridgeTests.MarkdownRenderer_RightAlignsNumericColumns (0ms)
+passed WealthTracker.Tests.BridgeTests.CsvRenderer_QuotesFieldsContainingCommas (0ms)
+passed WealthTracker.Tests.BridgeTests.NewRenderer_WorksWithEveryReport_WithoutChangingThem (0ms)
+tests/WealthTracker.Tests/bin/Debug/net10.0/WealthTracker.Tests.dll (net10.0|arm64) passed (609ms)
+
+Test run summary: Passed!
+  total: 31
+  failed: 0
+  succeeded: 31
+  skipped: 0
+  duration: 708ms
