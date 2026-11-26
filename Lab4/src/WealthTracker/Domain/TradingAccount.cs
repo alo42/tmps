@@ -1,4 +1,5 @@
 using WealthTracker.Patterns.Flyweight;
+using WealthTracker.Patterns.Observer;
 using WealthTracker.Patterns.Strategy;
 
 namespace WealthTracker.Domain;
@@ -6,14 +7,20 @@ namespace WealthTracker.Domain;
 /// <summary>
 /// The account a user trades through. It owns the trading rules and works on
 /// any <see cref="IPortfolio"/> - including an access proxy.
-/// STRATEGY - context: a sale asks the current <see cref="ILotSelectionStrategy"/>
-/// which lots to use, and the method can be switched while the program runs.
+/// <list type="bullet">
+/// <item>STRATEGY - context: a sale asks the current <see cref="ILotSelectionStrategy"/>
+/// which lots to use, and the method can be switched while the program runs.</item>
+/// <item>COMMAND - receiver: trade commands call Buy, Sell, Reverse and Reapply.</item>
+/// <item>OBSERVER - subject: every change is announced to the subscribed observers.</item>
+/// </list>
 /// </summary>
-public sealed class TradingAccount
+public sealed class TradingAccount : ITradeSubject
 {
     private readonly IPortfolio _portfolio;
     private readonly InstrumentFactory _instruments;
+    private readonly List<ITradeObserver> _observers = [];
     private ILotSelectionStrategy _lotSelection;
+    private bool _notifying;
 
     public TradingAccount(IPortfolio portfolio, InstrumentFactory instruments, ILotSelectionStrategy lotSelection)
     {
@@ -36,13 +43,24 @@ public sealed class TradingAccount
         _lotSelection = lotSelection;
     }
 
+    public void Subscribe(ITradeObserver observer)
+    {
+        ArgumentNullException.ThrowIfNull(observer);
+        if (!_observers.Contains(observer))   // subscribing twice must not notify twice
+            _observers.Add(observer);
+    }
+
+    public void Unsubscribe(ITradeObserver observer) => _observers.Remove(observer);
+
     public decimal QuantityHeld(string symbol) => LotsOf(symbol).Sum(lot => lot.Quantity);
 
     public TradeReceipt Buy(string symbol, decimal quantity, decimal price, DateOnly date)
     {
         var lot = new Lot(_instruments.Get(symbol), quantity, price, date); // validates quantity and price
-        _portfolio.AddLot(lot);
-        return new TradeReceipt(new Trade(TradeSide.Buy, lot.Instrument, quantity, price, date), [lot], []);
+        Apply(remove: [], add: [lot]);
+        var receipt = new TradeReceipt(new Trade(TradeSide.Buy, lot.Instrument, quantity, price, date), [lot], []);
+        Notify(TradeEventKind.Executed, receipt.Trade);
+        return receipt;
     }
 
     public TradeReceipt Sell(string symbol, decimal quantity, decimal price, DateOnly date)
@@ -72,6 +90,7 @@ public sealed class TradingAccount
             Picks = picks,
             Method = _lotSelection.Name,
         };
+        Notify(TradeEventKind.Executed, trade);
         return new TradeReceipt(trade, added, removed);
     }
 
@@ -80,6 +99,7 @@ public sealed class TradingAccount
     {
         ArgumentNullException.ThrowIfNull(receipt);
         Apply(remove: receipt.Added, add: receipt.Removed);
+        Notify(TradeEventKind.Reversed, receipt.Trade);
     }
 
     /// <summary>Repeats a reversed trade with exactly the same lots.</summary>
@@ -87,6 +107,7 @@ public sealed class TradingAccount
     {
         ArgumentNullException.ThrowIfNull(receipt);
         Apply(remove: receipt.Removed, add: receipt.Added);
+        Notify(TradeEventKind.Executed, receipt.Trade);
     }
 
     private List<Lot> LotsOf(string symbol) =>
@@ -95,11 +116,29 @@ public sealed class TradingAccount
 
     private void Apply(IReadOnlyList<Lot> remove, IReadOnlyList<Lot> add)
     {
+        if (_notifying)   // an observer that trades would start an endless chain of notifications
+            throw new InvalidOperationException("Observers may not trade while they are being notified.");
         if (remove.Any(lot => !_portfolio.Lots.Contains(lot)))
             throw new InvalidOperationException("The portfolio no longer holds the lots this trade expects.");
         foreach (var lot in remove)
             _portfolio.RemoveLot(lot);
         foreach (var lot in add)
             _portfolio.AddLot(lot);
+    }
+
+    private void Notify(TradeEventKind kind, Trade trade)
+    {
+        var change = new TradeEvent(kind, trade, _portfolio.Lots);
+        _notifying = true;
+        try
+        {
+            // A copy, so an observer may unsubscribe while it is being notified.
+            foreach (var observer in _observers.ToArray())
+                observer.OnTrade(change);
+        }
+        finally
+        {
+            _notifying = false;
+        }
     }
 }

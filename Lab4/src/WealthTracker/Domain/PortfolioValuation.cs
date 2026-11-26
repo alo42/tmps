@@ -19,7 +19,10 @@ public sealed record Allocation(AssetClass AssetClass, decimal MarketValue, deci
 public static class PortfolioValuation
 {
     public static IReadOnlyList<Holding> Holdings(IPortfolio portfolio, IQuoteService quotes) =>
-        portfolio.Lots
+        Holdings(portfolio.Lots, quotes);
+
+    public static IReadOnlyList<Holding> Holdings(IEnumerable<Lot> lots, IQuoteService quotes) =>
+        lots
             // Flyweights are shared, so grouping by the instrument reference
             // puts every lot of the same symbol in one group.
             .GroupBy(lot => lot.Instrument)
