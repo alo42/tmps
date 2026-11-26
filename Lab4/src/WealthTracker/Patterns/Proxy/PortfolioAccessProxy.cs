@@ -45,14 +45,14 @@ public sealed class PortfolioAccessProxy : IPortfolio
     public void AddLot(Lot lot)
     {
         ArgumentNullException.ThrowIfNull(lot);
-        Demand(Permission.Trade, $"buy {lot.Quantity} {lot.Instrument.Symbol}");
+        Demand(Permission.Trade, FormattableString.Invariant($"add a lot of {lot.Quantity} {lot.Instrument.Symbol}"));
         _real.AddLot(lot);
     }
 
     public bool RemoveLot(Lot lot)
     {
         ArgumentNullException.ThrowIfNull(lot);
-        Demand(Permission.Trade, $"sell {lot.Quantity} {lot.Instrument.Symbol}");
+        Demand(Permission.Trade, FormattableString.Invariant($"remove a lot of {lot.Quantity} {lot.Instrument.Symbol}"));
         return _real.RemoveLot(lot);
     }
 

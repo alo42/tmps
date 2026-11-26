@@ -78,7 +78,7 @@ public class ProxyTests
 
         Assert.Collection(proxy.AccessLog,
             e => Assert.True(e.Allowed),
-            e => Assert.Equal(("buy 3 AAPL", false), (e.Action, e.Allowed)));
+            e => Assert.Equal(("add a lot of 3 AAPL", false), (e.Action, e.Allowed)));
     }
 
     [Fact]

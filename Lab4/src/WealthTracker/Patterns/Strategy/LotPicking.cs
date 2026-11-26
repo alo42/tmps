@@ -19,7 +19,7 @@ public static class LotPicking
             remaining -= take;
         }
         if (remaining > 0)
-            throw new InvalidOperationException($"The lots hold {quantity - remaining} units; {quantity} were requested.");
+            throw new InvalidOperationException(FormattableString.Invariant($"The lots hold {quantity - remaining} units; {quantity} were requested."));
         return picks;
     }
 }

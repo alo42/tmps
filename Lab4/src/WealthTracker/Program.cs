@@ -1,5 +1,7 @@
 using WealthTracker.Client;
 
-// Usage: dotnet run --project src/WealthTracker [console|markdown|csv]
-var format = args.Length > 0 ? args[0] : "console";
-return ConsoleDemo.Run(format, Console.Out);
+// dotnet run --project src/WealthTracker            scripted demo of every pattern
+// dotnet run --project src/WealthTracker -- shell   type the commands yourself
+return args is ["shell"]
+    ? ConsoleDemo.Interactive(Console.In, Console.Out, DateOnly.FromDateTime(DateTime.Today))
+    : ConsoleDemo.Run(Console.Out);

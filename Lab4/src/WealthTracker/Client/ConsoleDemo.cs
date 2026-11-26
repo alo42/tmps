@@ -1,87 +1,123 @@
-using System.Globalization;
 using WealthTracker.Creational;
 using WealthTracker.Domain;
 using WealthTracker.Patterns.Bridge;
+using WealthTracker.Patterns.Command;
 using WealthTracker.Patterns.Flyweight;
+using WealthTracker.Patterns.Observer;
 using WealthTracker.Patterns.Proxy;
 
 namespace WealthTracker.Client;
 
 /// <summary>
-/// The client. It depends on abstractions - IPortfolio, Report,
-/// IReportRenderer, IQuoteService - and creates concrete objects only through
-/// the builder and the factories.
+/// Wires the application together and runs it, either as a scripted demo or
+/// as an interactive session. Everything behavioral is driven through
+/// <see cref="TradeShell"/>, exactly as a user at the keyboard would drive it.
 /// </summary>
 public static class ConsoleDemo
 {
-    public static int Run(string format, TextWriter output)
+    /// <summary>The date the scripted demo pretends it is, so its output never changes.</summary>
+    public static readonly DateOnly DemoDate = new(2026, 11, 26);
+
+    private sealed record Session(IPortfolio Portfolio, InstrumentFactory Instruments, IQuoteService Quotes,
+                                  LotSelectionFactory Methods, TradeShell Shell);
+
+    /// <summary>Creates the portfolio (Builder + Flyweight), the owner's proxy and the account.</summary>
+    private static Session Open(TextWriter output, DateOnly today)
     {
         IQuoteService quotes = InMemoryQuoteService.Demo();
         var instruments = new InstrumentFactory(InstrumentCatalog.Default());
-        var renderers = RendererFactory.Default();
+        var portfolio = new PortfolioDirector(new PortfolioBuilder(instruments)).BuildDemo();
+        var methods = LotSelectionFactory.Default();
 
-        // 1. Creational reuse: the director and builder create the portfolio.
-        Section(output, "1. Builder + Flyweight factory: building the portfolio");
-        IPortfolio portfolio = new PortfolioDirector(new PortfolioBuilder(instruments)).BuildDemo();
-        output.WriteLine($"Built '{portfolio.Name}' with {portfolio.Lots.Count} purchase lots.");
+        IPortfolio owner = new PortfolioAccessProxy(portfolio, new User("Adrian", Role.Owner));
+        var account = new TradingAccount(owner, instruments, methods.Create("fifo"));
+        var observers = new Dictionary<string, ITradeObserver>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["log"] = new ActivityLog(output),
+            ["gains"] = new RealisedGainsTracker(output),
+            ["alerts"] = new ConcentrationAlert(quotes, limitPercent: 35m, output),
+        };
+        var holdings = new HoldingsReport(RendererFactory.Default().Create("console"));
+        var shell = new TradeShell(account, new TradeHistory(), methods, observers, quotes, holdings, output, today);
+        return new Session(portfolio, instruments, quotes, methods, shell);
+    }
 
-        // 2. Flyweight: 43 lots, 6 instrument objects.
-        Section(output, "2. Flyweight: lots share instrument data");
-        output.WriteLine($"Lots: {portfolio.Lots.Count}    distinct instrument objects: {instruments.Count}");
-        var vwce = portfolio.Lots.Where(l => l.Instrument.Symbol == "VWCE").ToList();
-        output.WriteLine($"VWCE lots: {vwce.Count}, all pointing at the same object: " +
-                         $"{vwce.All(l => ReferenceEquals(l.Instrument, vwce[0].Instrument))}");
-        var m = FlyweightMeasurement.Run(100_000);
-        output.WriteLine(string.Create(CultureInfo.InvariantCulture,
-            $"Allocating {m.Lots:N0} lots: shared {m.SharedBytes:N0} B vs unshared {m.UnsharedBytes:N0} B " +
-            $"-> {m.SavedBytes:N0} B saved ({m.SavedPercent:0.0}%)"));
+    /// <summary>The scripted walk-through: each section is a few typed commands.</summary>
+    public static int Run(TextWriter output)
+    {
+        var session = Open(output, DemoDate);
 
-        // 3. Proxy: the advisor may look but not trade.
-        Section(output, "3. Proxy: sharing the portfolio with an advisor");
-        var owner = new PortfolioAccessProxy(portfolio, new User("Adrian", Role.Owner));
-        var advisor = new PortfolioAccessProxy(portfolio, new User("Ion", Role.Advisor));
-        var guest = new PortfolioAccessProxy(portfolio, new User("Visitor", Role.Guest));
-        var newLot = new Lot(instruments.Get("MSFT"), 1m, 430m, new DateOnly(2025, 11, 3));
-        Attempt(output, "Adrian (Owner) buys 1 MSFT", () => owner.AddLot(newLot));
-        Attempt(output, "Ion (Advisor) reads the lots", () => _ = advisor.Lots);
-        Attempt(output, "Ion (Advisor) sells 1 MSFT", () => advisor.RemoveLot(newLot));
-        Attempt(output, "Visitor (Guest) reads the lots", () => _ = guest.Lots);
-        owner.RemoveLot(newLot); // restore the demo portfolio
+        Section(output, "1. Setup: Builder + Flyweight + Proxy from Lab 3");
+        output.WriteLine($"Built '{session.Portfolio.Name}' with {session.Portfolio.Lots.Count} lots sharing " +
+                         $"{session.Instruments.Count} instrument objects; Adrian (Owner) trades through a PortfolioAccessProxy.");
+        Type(session.Shell, output, "watch log", "watch gains", "watch alerts", "method");
 
-        // 4. Bridge: three reports, each in a different format.
-        Section(output, "4. Bridge: reports x formats");
-        output.WriteLine("AllocationReport + ConsoleTableRenderer:");
-        output.WriteLine(new AllocationReport(renderers.Create("console")).Render(portfolio, quotes));
-        output.WriteLine("PerformanceReport + CsvRenderer:");
-        output.WriteLine(new PerformanceReport(renderers.Create("csv")).Render(portfolio, quotes));
+        Section(output, "2. Command: trades are objects that can be undone and redone");
+        Type(session.Shell, output,
+             "buy ETH 1.5 3900 2024-03-11",
+             "buy ETH 2 2300 2024-08-05",
+             "undo",
+             "redo",
+             "history");
 
-        // 5. One execution path through all three patterns:
-        //    advisor -> Proxy -> Bridge (report + renderer) -> Flyweight instruments.
-        Section(output, $"5. All together: the advisor's holdings report ({format})");
-        Report report = new HoldingsReport(renderers.Create(format));
-        output.WriteLine(report.Render(advisor, quotes));
-        output.WriteLine("Advisor access log:");
-        foreach (var e in advisor.AccessLog)
-            output.WriteLine($"  {(e.Allowed ? "ALLOWED" : "DENIED ")}  {e.User}: {e.Action}");
+        Section(output, "3. Strategy: the same sale under FIFO, LIFO and HIFO");
+        Type(session.Shell, output,
+             "sell ETH 2",
+             "undo",
+             "method lifo",
+             "sell ETH 2",
+             "undo",
+             "method hifo",
+             "sell ETH 2");
+
+        Section(output, "4. Observer: subscribing and unsubscribing at runtime");
+        Type(session.Shell, output,
+             "unwatch log",
+             "sell AAPL 2",
+             "watch log",
+             "buy VWCE 2",
+             "history");
+
+        Section(output, "5. All together: the advisor's sale goes Command -> Strategy -> Proxy and is refused");
+        var advisorOutput = new ActivityLog(output);
+        var advisorAccount = new TradingAccount(
+            new PortfolioAccessProxy(session.Portfolio, new User("Ion", Role.Advisor)),
+            session.Instruments, session.Methods.Create("fifo"));
+        advisorAccount.Subscribe(advisorOutput);
+        var advisorShell = new TradeShell(advisorAccount, new TradeHistory(), session.Methods,
+                                          new Dictionary<string, ITradeObserver>(), session.Quotes,
+                                          new HoldingsReport(new ConsoleTableRenderer()), output, DemoDate);
+        Type(advisorShell, output, "sell ETH 1", "history");
+        output.WriteLine($"Observers told about the refused sale: {advisorOutput.Entries.Count}");
+        output.WriteLine();
+        output.WriteLine("Adrian's holdings after the session (Bridge: HoldingsReport + ConsoleTableRenderer):");
+        Type(session.Shell, output, "holdings");
         return 0;
+    }
+
+    /// <summary>Lets the user type the commands: dotnet run -- shell</summary>
+    public static int Interactive(TextReader input, TextWriter output, DateOnly today)
+    {
+        var session = Open(output, today);
+        output.WriteLine($"Wealth tracker - '{session.Portfolio.Name}', {session.Portfolio.Lots.Count} lots. Type 'help', or 'quit' to leave.");
+        foreach (var line in new[] { "watch log", "watch gains", "watch alerts", "method" })
+            session.Shell.Execute(line);
+        session.Shell.Run(input, prompt: true);
+        return 0;
+    }
+
+    private static void Type(TradeShell shell, TextWriter output, params string[] lines)
+    {
+        foreach (var line in lines)
+        {
+            output.WriteLine($"> {line}");
+            shell.Execute(line);
+        }
     }
 
     private static void Section(TextWriter output, string title)
     {
         output.WriteLine();
         output.WriteLine($"=== {title} ===");
-    }
-
-    private static void Attempt(TextWriter output, string description, Action action)
-    {
-        try
-        {
-            action();
-            output.WriteLine($"  ALLOWED  {description}");
-        }
-        catch (AccessDeniedException ex)
-        {
-            output.WriteLine($"  DENIED   {description} - {ex.Message}");
-        }
     }
 }
