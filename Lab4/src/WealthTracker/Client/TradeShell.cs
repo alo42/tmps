@@ -42,8 +42,16 @@ public sealed class TradeShell
         _today = today;
         _verbs = new(StringComparer.OrdinalIgnoreCase)
         {
-            ["buy"] = a => _history.Execute(new BuyCommand(_account, Arg(a, 0), Number(Arg(a, 1)), PriceOr(a, 2), DateOr(a, 3))),
-            ["sell"] = a => _history.Execute(new SellCommand(_account, Arg(a, 0), Number(Arg(a, 1)), PriceOr(a, 2), DateOr(a, 3))),
+            ["buy"] = a =>
+            {
+                var order = Order(a);
+                _history.Execute(new BuyCommand(_account, order.Symbol, order.Quantity, order.Price, order.Date));
+            },
+            ["sell"] = a =>
+            {
+                var order = Order(a);
+                _history.Execute(new SellCommand(_account, order.Symbol, order.Quantity, order.Price, order.Date));
+            },
             ["undo"] = _ => _history.Undo(),
             ["redo"] = _ => _history.Redo(),
             ["history"] = _ => ShowHistory(),
@@ -134,8 +142,8 @@ public sealed class TradeShell
 
     private void Help() => _output.WriteLine(
         """
-          buy  SYMBOL QTY [PRICE] [YYYY-MM-DD]   record a purchase (price defaults to the current quote)
-          sell SYMBOL QTY [PRICE] [YYYY-MM-DD]   record a sale; the lot-selection method picks the lots
+          buy  SYMBOL QTY [PRICE] [YYYY-MM-DD]   record a purchase, e.g. 'buy ETH 1.5' (price defaults to the quote)
+          sell SYMBOL QTY [PRICE] [YYYY-MM-DD]   record a sale, e.g. 'sell AAPL 2'; the method picks the lots
           undo | redo | history                  step back, step forward, list the trades in effect
           method [fifo|lifo|hifo]                show or switch the lot-selection method
           watch | unwatch [log|gains|alerts]     subscribe or unsubscribe an observer
@@ -143,14 +151,32 @@ public sealed class TradeShell
           quit
         """);
 
-    private decimal PriceOr(string[] args, int index) =>
-        args.Length > index ? Number(args[index]) : _quotes.PriceOf(args[0]);
+    private const string OrderUsage = "Usage: buy|sell SYMBOL QTY [PRICE] [YYYY-MM-DD], e.g. 'sell AAPL 2'.";
 
-    private DateOnly DateOr(string[] args, int index) =>
-        args.Length > index ? DateOnly.ParseExact(args[index], "yyyy-MM-dd", CultureInfo.InvariantCulture) : _today;
+    /// <summary>
+    /// Reads "SYMBOL QTY [PRICE] [DATE]". "QTY SYMBOL" ("sell 2 AAPL") is accepted too:
+    /// a symbol is never a number, so the order of the first two words is unambiguous.
+    /// </summary>
+    private (string Symbol, decimal Quantity, decimal Price, DateOnly Date) Order(string[] args)
+    {
+        if (args.Length < 2)
+            throw new ArgumentException($"Missing arguments. {OrderUsage}");
+        var (symbol, quantity) = IsNumber(args[0]) && !IsNumber(args[1]) ? (args[1], args[0]) : (args[0], args[1]);
+        var price = args.Length > 2 ? Number(args[2]) : _quotes.PriceOf(symbol);
+        var date = args.Length > 3 ? Date(args[3]) : _today;
+        return (symbol, Number(quantity), price, date);
+    }
 
-    private static string Arg(string[] args, int index) =>
-        args.Length > index ? args[index] : throw new ArgumentException("Missing argument - type 'help'.");
+    private static bool IsNumber(string text) =>
+        decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out _);
 
-    private static decimal Number(string text) => decimal.Parse(text, NumberStyles.Number, CultureInfo.InvariantCulture);
+    private static decimal Number(string text) =>
+        decimal.TryParse(text, NumberStyles.Number, CultureInfo.InvariantCulture, out var value)
+            ? value
+            : throw new FormatException($"'{text}' is not a number. {OrderUsage}");
+
+    private static DateOnly Date(string text) =>
+        DateOnly.TryParseExact(text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)
+            ? date
+            : throw new FormatException($"'{text}' is not a date - write it as YYYY-MM-DD.");
 }

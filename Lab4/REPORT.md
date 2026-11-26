@@ -31,7 +31,7 @@ The behavioral patterns work on the objects the earlier labs built: the portfoli
 | 6. Clean project structure | `Domain/`, `Patterns/<Pattern>/`, `Creational/`, `Client/` (§5) |
 | 7. Runnable demo | `dotnet run --project src/WealthTracker` — output in [`docs/demo-output.txt`](docs/demo-output.txt) |
 | A. Behavior changes at runtime | in `dotnet run --project src/WealthTracker -- shell` the user types `method lifo` to switch the strategy, `watch`/`unwatch` to subscribe and unsubscribe observers, `undo`/`redo` to move through the command history |
-| B. At least 2 tests per pattern | Strategy 11 (9 methods), Command 7, Observer 7, plus 6 interaction tests; with the 28 Flyweight, Proxy, Bridge and creational tests kept from Lab 3 — 59 in total, `dotnet test` |
+| B. At least 2 tests per pattern | Strategy 11 (9 methods), Command 7, Observer 7, plus 7 interaction tests; with the 28 Flyweight, Proxy, Bridge and creational tests kept from Lab 3 — 60 in total, `dotnet test` |
 
 ## 2. Patterns
 
@@ -300,9 +300,9 @@ The command holds no trading logic: `Place()` is `Account.Buy(...)` in `BuyComma
 Log of `dotnet test --output Detailed` for `CommandTests`:
 
 ```text
-passed CommandTests.Redo_ReappliesTheSameLots_EvenIfTheMethodChangedInBetween (10ms)
-passed CommandTests.NewCommandAfterUndo_ClearsTheRedoStack (6ms)
-passed CommandTests.SellThenUndo_PutsBackEveryLot_AndDropsTheSplitRest (1ms)
+passed CommandTests.Redo_ReappliesTheSameLots_EvenIfTheMethodChangedInBetween (9ms)
+passed CommandTests.NewCommandAfterUndo_ClearsTheRedoStack (8ms)
+passed CommandTests.SellThenUndo_PutsBackEveryLot_AndDropsTheSplitRest (0ms)
 passed CommandTests.History_RunsAnyITradeCommand (0ms)
 passed CommandTests.BuyThenUndo_RestoresTheOriginalLots (0ms)
 passed CommandTests.Undo_WithNothingDone_Throws (0ms)
@@ -418,10 +418,10 @@ The subject only loops over `ITradeObserver`; it never names a concrete observer
 Log of `dotnet test --output Detailed` for `ObserverTests`:
 
 ```text
-passed ObserverTests.ObserverThatTrades_IsStopped_InsteadOfLoopingForever (10ms)
+passed ObserverTests.ObserverThatTrades_IsStopped_InsteadOfLoopingForever (9ms)
 passed ObserverTests.SubscribingTwice_StillNotifiesOnce (0ms)
-passed ObserverTests.UnsubscribedObserver_IsNotNotified_TheOthersStillAre (0ms)
-passed ObserverTests.ActivityLog_ShowsTheLotsTheStrategyChose (12ms)
+passed ObserverTests.UnsubscribedObserver_IsNotNotified_TheOthersStillAre (2ms)
+passed ObserverTests.ActivityLog_ShowsTheLotsTheStrategyChose (9ms)
 passed ObserverTests.UndoIsAnnounced_SoRealisedGainsGoBackToZero (0ms)
 passed ObserverTests.EverySubscribedObserver_IsNotified (1ms)
 passed ObserverTests.ConcentrationAlert_FiresOnlyAboveTheLimit (0ms)
@@ -467,6 +467,7 @@ The same path decides what happens when something fails. When the advisor types 
 | `SellCommand_AsksTheStrategy_ThenAnnouncesTheResult` | a `SellCommand` under HIFO realises −1,038.50 in the gains observer and logs the two chosen lots; the history can undo it |
 | `AdvisorSellCommand_IsRefusedByTheProxy_NotRecorded_AndNotAnnounced` | through the advisor's proxy the command throws `AccessDeniedException`; history empty, log empty, 4 lots unchanged |
 | `TypedCommands_SwitchTheStrategyAndTheObservers_WhileTheProgramRuns` | a typed session (`watch`, `method hifo`, `sell`, `unwatch log`, `undo`, a mistyped method, `quit`) changes behaviour exactly as typed and stops at `quit` |
+| `TypedOrders_AcceptEitherWordOrder_AndExplainMistakes` | `SELL 2 AAPL` and `sell AAPL 1` both work; `sell AAPL two` and a date written as `26.11.2026` are rejected with a message that shows the expected form, and change nothing |
 | `ConsoleDemo_RunsEverySection` | the scripted demo runs every section without an error |
 | `AdvisorReport_GoesThroughProxy_Bridge_AndSharedInstruments` | (Lab 3) the advisor's report goes Proxy → Bridge → Flyweight |
 | `Advisor_CannotTrade_OnTheSamePath` | (Lab 3) the advisor cannot remove a lot |
@@ -474,13 +475,14 @@ The same path decides what happens when something fails. When the advisor types 
 Log of `dotnet test --output Detailed` for `InteractionTests`:
 
 ```text
-passed InteractionTests.Advisor_CannotTrade_OnTheSamePath (10ms)
+passed InteractionTests.Advisor_CannotTrade_OnTheSamePath (9ms)
 passed InteractionTests.SellCommand_AsksTheStrategy_ThenAnnouncesTheResult (12ms)
-passed InteractionTests.TypedCommands_SwitchTheStrategyAndTheObservers_WhileTheProgramRuns (1ms)
+passed InteractionTests.TypedOrders_AcceptEitherWordOrder_AndExplainMistakes (0ms)
+passed InteractionTests.TypedCommands_SwitchTheStrategyAndTheObservers_WhileTheProgramRuns (0ms)
 passed InteractionTests.ConsoleDemo_RunsEverySection (1ms)
 passed InteractionTests.AdvisorSellCommand_IsRefusedByTheProxy_NotRecorded_AndNotAnnounced (0ms)
 passed InteractionTests.AdvisorReport_GoesThroughProxy_Bridge_AndSharedInstruments (0ms)
-6 passed, 0 failed
+7 passed, 0 failed
 ```
 
 **Behavior changed at runtime.**
@@ -552,13 +554,13 @@ Lab4/
 │   ├── Patterns/Proxy/           (Lab 3)
 │   ├── Patterns/Bridge/          (Lab 3)
 │   └── Creational/               PortfolioBuilder, PortfolioDirector, RendererFactory, LotSelectionFactory
-└── tests/WealthTracker.Tests/    59 tests, one class per pattern
+└── tests/WealthTracker.Tests/    60 tests, one class per pattern
 ```
 
 ```bash
 dotnet run --project src/WealthTracker            # scripted demo of every pattern
 dotnet run --project src/WealthTracker -- shell   # type the commands yourself
-dotnet test                                       # all 59 tests, one command
+dotnet test                                       # all 60 tests, one command
 ```
 
 ## 6. The behavioral patterns not implemented

@@ -20,7 +20,7 @@ Run from this folder (`Lab4/`):
 dotnet build                                       # compile app + tests
 dotnet run --project src/WealthTracker             # scripted demo of every pattern
 dotnet run --project src/WealthTracker -- shell    # type the commands yourself
-dotnet test                                        # all 59 unit tests, one command
+dotnet test                                        # all 60 unit tests, one command
 dotnet test --output Detailed                      # ... listing every test
 ```
 
@@ -37,6 +37,8 @@ The demo is a scripted session of these commands; in `-- shell` mode you type th
 | `watch` / `unwatch [log\|gains\|alerts]` | subscribe or unsubscribe an observer while the program runs | Observer |
 | `holdings` | holdings report | Bridge |
 | `help`, `quit` | | |
+
+Commands are case-insensitive, and the quantity may come before the symbol: `SELL 2 AAPL` is the same as `sell AAPL 2`.
 
 Example: `method hifo`, then `sell ETH 2` realises −1,038.50 instead of +2,261.50 under FIFO.
 
@@ -76,7 +78,7 @@ Lab4/
 │   │   ├── Proxy/              (Lab 3)
 │   │   └── Bridge/             (Lab 3)
 │   └── Creational/             PortfolioBuilder, PortfolioDirector, RendererFactory, LotSelectionFactory
-├── tests/WealthTracker.Tests/  59 xUnit v3 tests, one class per pattern
+├── tests/WealthTracker.Tests/  60 xUnit v3 tests, one class per pattern
 ├── docs/                       captured test log and demo output
 │   └── report-builder/         renders REPORT.md into the PDF
 ├── REPORT.md                   the report

@@ -109,6 +109,26 @@ public class InteractionTests
     }
 
     [Fact]
+    public void TypedOrders_AcceptEitherWordOrder_AndExplainMistakes()
+    {
+        var f = new TradingFixture();
+        var output = new StringWriter();
+        var shell = new TradeShell(f.Account, new TradeHistory(), LotSelectionFactory.Default(),
+            new Dictionary<string, ITradeObserver>(), InMemoryQuoteService.Demo(),
+            new HoldingsReport(new ConsoleTableRenderer()), output, TradingFixture.Today);
+
+        shell.Execute("SELL 2 AAPL");          // quantity first, upper-case verb
+        shell.Execute("sell AAPL 1");          // symbol first
+        shell.Execute("sell AAPL two");
+        shell.Execute("buy ETH 1 3000 26.11.2026");
+
+        Assert.Equal(5m, f.Account.QuantityHeld("AAPL"));                         // 8 - 2 - 1
+        Assert.Equal(7.7m, f.Account.QuantityHeld("ETH"));                        // the bad buy did nothing
+        Assert.Contains("'two' is not a number. Usage: buy|sell SYMBOL QTY", output.ToString());
+        Assert.Contains("'26.11.2026' is not a date - write it as YYYY-MM-DD.", output.ToString());
+    }
+
+    [Fact]
     public void ConsoleDemo_RunsEverySection()
     {
         var output = new StringWriter();
