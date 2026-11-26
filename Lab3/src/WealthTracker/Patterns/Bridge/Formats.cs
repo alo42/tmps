@@ -12,7 +12,7 @@ internal static class Formats
         value.ToString("#,##0.00", CultureInfo.InvariantCulture);
 
     public static string Quantity(decimal value) =>
-        value.ToString("0.########", CultureInfo.InvariantCulture);
+        value.ToString("#,##0.########", CultureInfo.InvariantCulture);
 
     public static string Percent(decimal value) =>
         value.ToString("0.00", CultureInfo.InvariantCulture) + "%";
