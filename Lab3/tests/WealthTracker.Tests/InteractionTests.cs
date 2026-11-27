@@ -40,6 +40,30 @@ public class InteractionTests
     }
 
     [Fact]
+    public void LiveShell_ShowsSharingAndAccessDecisions_AsTheUserTypes()
+    {
+        var output = new StringWriter();
+        var shell = new LiveShell(output, new DateOnly(2026, 11, 27));
+
+        shell.Run(new StringReader("""
+            buy NVDA 3
+            buy 0.5 NVDA
+            as ion
+            buy NVDA 1
+            as guest
+            lots NVDA
+            quit
+            """), prompt: false);
+
+        var text = output.ToString();
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(text, "NVDA -> NEW object"));  // created once...
+        Assert.Equal(2, System.Text.RegularExpressions.Regex.Matches(text, "NVDA -> existing object").Count); // ...then reused
+        Assert.Contains("ALLOWED  Adrian bought 0.5 NVDA", text);
+        Assert.Contains("DENIED   Ion (Advisor) is not allowed to buy 1 NVDA.", text);
+        Assert.Contains("DENIED   Visitor (Guest) is not allowed to view the lots.", text);
+    }
+
+    [Fact]
     public void ConsoleDemo_RunsEverySection()
     {
         var output = new StringWriter();

@@ -29,8 +29,8 @@ Labs 1–2 were written in Python, which this assignment forbids, so the domain 
 | 4. Open for extension | a new role, renderer, report or format needs new classes or data only — proven by `NewRole_…`, `NewRenderer_…`, `NewReport_…`, `RendererFactory_NewFormat_…` |
 | 5. Build on the previous lab | Builder, Director and Factory Method reused (§4) |
 | 6. Clean project structure | separate `Domain/`, `Patterns/<Pattern>/`, `Creational/`, `Client/` folders (§5) |
-| 7. Runnable demo | `dotnet run --project src/WealthTracker` — output in [`docs/demo-output.txt`](docs/demo-output.txt) |
-| B. At least 2 tests per pattern | Flyweight 7, Proxy 6, Bridge 11 (7 methods), plus 3 interaction and 4 creational — 31 in total, `dotnet test` |
+| 7. Runnable demo | `dotnet run --project src/WealthTracker` — output in [`docs/demo-output.txt`](docs/demo-output.txt); `-- shell` shows the Flyweight and the Proxy live (§5) |
+| B. At least 2 tests per pattern | Flyweight 7, Proxy 6, Bridge 11 (7 methods), plus 4 interaction and 4 creational — 32 in total, `dotnet test` |
 
 ## 2. Patterns
 
@@ -155,12 +155,12 @@ Log of `dotnet test --output Detailed` for `FlyweightTests` (full log: [`docs/te
 
 ```text
 passed FlyweightTests.MarketValue_TakesQuantityAsExtrinsicState (9ms)
-passed FlyweightTests.SharingInstruments_AllocatesLessThanOneInstrumentPerLot (5ms)
-passed FlyweightTests.TenThousandLots_ShareOneInstrumentPerSymbol (3ms)
+passed FlyweightTests.SharingInstruments_AllocatesLessThanOneInstrumentPerLot (6ms)
+passed FlyweightTests.TenThousandLots_ShareOneInstrumentPerSymbol (5ms)
 passed FlyweightTests.Get_SameSymbolTwice_ReturnsTheSameInstance (0ms)
 passed FlyweightTests.Get_UnknownSymbol_Throws (0ms)
 passed FlyweightTests.Instrument_IntrinsicStateIsImmutable (0ms)
-passed FlyweightTests.Get_FromManyThreadsAtOnce_StillCreatesOneInstance (1ms)
+passed FlyweightTests.Get_FromManyThreadsAtOnce_StillCreatesOneInstance (2ms)
 7 passed, 0 failed
 ```
 
@@ -276,9 +276,9 @@ classDiagram
 Log of `dotnet test --output Detailed` for `ProxyTests` (full log: [`docs/test-results.txt`](docs/test-results.txt)):
 
 ```text
-passed ProxyTests.Advisor_Lots_ReturnsExactlyWhatTheRealPortfolioReturns (8ms)
-passed ProxyTests.Owner_AddLot_PassesTheSameLotThroughUnchanged (4ms)
-passed ProxyTests.EveryAttempt_IsRecordedInTheAccessLog (1ms)
+passed ProxyTests.Advisor_Lots_ReturnsExactlyWhatTheRealPortfolioReturns (9ms)
+passed ProxyTests.Owner_AddLot_PassesTheSameLotThroughUnchanged (5ms)
+passed ProxyTests.EveryAttempt_IsRecordedInTheAccessLog (2ms)
 passed ProxyTests.Advisor_AddLot_IsBlocked_AndNeverReachesTheRealPortfolio (0ms)
 passed ProxyTests.Guest_CannotEvenView (0ms)
 passed ProxyTests.NewRole_WorksWithoutChangingTheProxy (0ms)
@@ -383,14 +383,14 @@ public abstract class Report
 Log of `dotnet test --output Detailed` for `BridgeTests` (full log: [`docs/test-results.txt`](docs/test-results.txt)):
 
 ```text
-passed BridgeTests.HoldingsReport_AggregatesLotsPerInstrument (12ms)
-passed BridgeTests.PerformanceReport_ComputesTheReturnOnCost (8ms)
-passed BridgeTests.HoldingsReport_ShowsTheSameTotal_InEveryFormat(renderer: ConsoleTableRenderer { }) (1ms)
+passed BridgeTests.HoldingsReport_AggregatesLotsPerInstrument (13ms)
+passed BridgeTests.PerformanceReport_ComputesTheReturnOnCost (7ms)
+passed BridgeTests.HoldingsReport_ShowsTheSameTotal_InEveryFormat(renderer: ConsoleTableRenderer { }) (2ms)
 passed BridgeTests.HoldingsReport_ShowsTheSameTotal_InEveryFormat(renderer: MarkdownRenderer { }) (0ms)
 passed BridgeTests.HoldingsReport_ShowsTheSameTotal_InEveryFormat(renderer: CsvRenderer { }) (0ms)
 passed BridgeTests.NewReport_WorksWithEveryRenderer_WithoutChangingThem(renderer: ConsoleTableRenderer { }) (0ms)
 passed BridgeTests.NewReport_WorksWithEveryRenderer_WithoutChangingThem(renderer: MarkdownRenderer { }) (0ms)
-passed BridgeTests.NewReport_WorksWithEveryRenderer_WithoutChangingThem(renderer: CsvRenderer { }) (2ms)
+passed BridgeTests.NewReport_WorksWithEveryRenderer_WithoutChangingThem(renderer: CsvRenderer { }) (0ms)
 passed BridgeTests.MarkdownRenderer_RightAlignsNumericColumns (0ms)
 passed BridgeTests.CsvRenderer_QuotesFieldsContainingCommas (0ms)
 passed BridgeTests.NewRenderer_WorksWithEveryReport_WithoutChangingThem (0ms)
@@ -436,14 +436,16 @@ The cooperation is more than co-existence. `PortfolioValuation` groups lots by t
 | `AdvisorReport_GoesThroughProxy_Bridge_AndSharedInstruments` | the advisor's Markdown report shows 54,715.95; every proxy check was allowed; 43 lots use 6 instruments |
 | `Advisor_CannotTrade_OnTheSamePath` | on the same path a sale is denied and the portfolio still has 43 lots |
 | `ConsoleDemo_RunsEverySection` | the whole demo runs, exits with 0 and prints every section |
+| `LiveShell_ShowsSharingAndAccessDecisions_AsTheUserTypes` | in the live shell the first NVDA purchase creates an object and the next two reuse it; the advisor's purchase and the guest's read are denied |
 
 Log of `dotnet test --output Detailed` for `InteractionTests` (full log: [`docs/test-results.txt`](docs/test-results.txt)):
 
 ```text
-passed InteractionTests.ConsoleDemo_RunsEverySection (28ms)
+passed InteractionTests.ConsoleDemo_RunsEverySection (32ms)
 passed InteractionTests.Advisor_CannotTrade_OnTheSamePath (0ms)
 passed InteractionTests.AdvisorReport_GoesThroughProxy_Bridge_AndSharedInstruments (0ms)
-3 passed, 0 failed
+passed InteractionTests.LiveShell_ShowsSharingAndAccessDecisions_AsTheUserTypes (2ms)
+4 passed, 0 failed
 ```
 
 The end of the demo output (`dotnet run --project src/WealthTracker -- markdown`):
@@ -485,8 +487,8 @@ Advisor access log:
 Log of `dotnet test --output Detailed` for `CreationalTests` (full log: [`docs/test-results.txt`](docs/test-results.txt)):
 
 ```text
-passed CreationalTests.Builder_TakesInstrumentsFromTheFlyweightFactory (8ms)
-passed CreationalTests.RendererFactory_NewFormat_IsRegisteredWithoutEditingTheFactory (3ms)
+passed CreationalTests.Builder_TakesInstrumentsFromTheFlyweightFactory (9ms)
+passed CreationalTests.RendererFactory_NewFormat_IsRegisteredWithoutEditingTheFactory (4ms)
 passed CreationalTests.Builder_RejectsAnEmptyPortfolio (0ms)
 passed CreationalTests.RendererFactory_CreatesTheRendererForEachFormat (0ms)
 4 passed, 0 failed
@@ -499,18 +501,44 @@ Lab3/
 ├── WealthTracker.slnx            solution
 ├── src/WealthTracker/
 │   ├── Program.cs                entry point
-│   ├── Client/                   client code: ConsoleDemo, FlyweightMeasurement
+│   ├── Client/                   client code: ConsoleDemo, LiveShell, FlyweightMeasurement
 │   ├── Domain/                   domain models: Lot, Portfolio, IPortfolio, quotes, valuation
 │   ├── Patterns/Flyweight/       IInstrument, Instrument, InstrumentFactory, InstrumentCatalog
 │   ├── Patterns/Proxy/           PortfolioAccessProxy, User, Role, Permission, AccessEvent, ...
 │   ├── Patterns/Bridge/          Report + 3 reports, IReportRenderer + 3 renderers
 │   └── Creational/               PortfolioBuilder, PortfolioDirector, RendererFactory
-└── tests/WealthTracker.Tests/    31 tests, one class per pattern
+└── tests/WealthTracker.Tests/    32 tests, one class per pattern
 ```
 
 ```bash
 dotnet run --project src/WealthTracker [console|markdown|csv]   # demo
-dotnet test                                                      # all tests, one command
+dotnet run --project src/WealthTracker -- shell                 # Flyweight and Proxy live
+dotnet test                                                     # all tests, one command
+```
+
+**Live mode.** In `-- shell` the user types commands against the demo portfolio. Each purchase shows first what the Flyweight factory did — reused the existing instrument object or created a new one — and then what the Proxy decided for the current user (`as adrian`, `as ion`, `as guest`). `#A42D` is the object's identity in memory, so equal ids mean the same object; `NVDA` is in the catalog but not yet held, so its first purchase creates the seventh object and later ones reuse it.
+
+A session:
+
+```text
+Adrian> buy VWCE 2
+  flyweight  VWCE -> existing object #A42D  (nothing created)   pool: 6 objects, catalog reads: 6
+  proxy      ALLOWED  Adrian bought 2 VWCE @ 118.40
+Adrian> buy NVDA 3
+  flyweight  NVDA -> NEW object #C59A  (first request: read from the catalog)   pool: 7 objects, catalog reads: 7
+  proxy      ALLOWED  Adrian bought 3 NVDA @ 182.30
+Adrian> buy 1 NVDA
+  flyweight  NVDA -> existing object #C59A  (nothing created)   pool: 7 objects, catalog reads: 7
+  proxy      ALLOWED  Adrian bought 1 NVDA @ 182.30
+Adrian> as ion
+  now acting as Ion (Advisor) - permissions: View
+Ion> buy AAPL 1
+  flyweight  AAPL -> existing object #3390  (nothing created)   pool: 7 objects, catalog reads: 7
+  proxy      DENIED   Ion (Advisor) is not allowed to buy 1 AAPL.  (the real portfolio was not touched)
+Ion> as guest
+  now acting as Visitor (Guest) - permissions: None
+Visitor> lots BTC
+  proxy      DENIED   Visitor (Guest) is not allowed to view the lots.  (the real portfolio was not touched)
 ```
 
 ## 6. The structural patterns not implemented

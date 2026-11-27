@@ -27,5 +27,6 @@ public sealed class InMemoryQuoteService : IQuoteService
         ["BTC"] = 61_250.00m,
         ["ETH"] = 2_980.75m,
         ["EUR-CASH"] = 1.00m,
+        ["NVDA"] = 182.30m,
     });
 }

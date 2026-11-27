@@ -39,5 +39,6 @@ public sealed class InstrumentCatalog
         ("BTC", "Bitcoin", AssetClass.Crypto, "Kraken", "EUR"),
         ("ETH", "Ethereum", AssetClass.Crypto, "Kraken", "EUR"),
         ("EUR-CASH", "Savings account", AssetClass.Cash, "maib", "EUR"),
+        ("NVDA", "NVIDIA Corp.", AssetClass.Stock, "NASDAQ", "USD"),   // tradable, not yet held
     ]);
 }
